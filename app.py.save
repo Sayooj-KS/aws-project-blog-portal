@@ -1,0 +1,217 @@
+from flask import Flask, render_template, request, redirect, session, flash
+from flask_mysqldb import MySQL
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+app.secret_key = "secret123"
+
+# MYSQL CONFIG
+
+app.config["MYSQL_HOST"] = "news-portal-db.cxui0ui2sbwk.ap-south-1.rds.amazonaws.com"
+app.config["MYSQL_PORT"] = 3306
+app.config["MYSQL_USER"] = "admin"
+app.config["MYSQL_PASSWORD"] = "sayooj1234"
+app.config["MYSQL_DB"] = "blogdb"
+
+mysql = MySQL(app)
+
+# HOME
+
+@app.route("/")
+def home():
+    return redirect("/login")
+
+# REGISTER
+
+@app.route("/register", methods=["GET","POST"])
+def register():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        email = request.form["email"]
+        password = generate_password_hash(request.form["password"])
+
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            "INSERT INTO users(username,email,password) VALUES(%s,%s,%s)",
+            (username,email,password)
+        )
+
+        mysql.connection.commit()
+        cur.close()
+
+        return redirect("/login")
+
+    return render_template("register.html")
+
+# LOGIN
+
+@app.route("/login", methods=["GET","POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            "SELECT * FROM users WHERE username=%s",
+            [username]
+        )
+
+        user = cur.fetchone()
+
+        cur.close()
+
+        if user and check_password_hash(user[3], password):
+
+            session["username"] = usernam
+e
+            flash("Login Successful 🚀")
+
+            return redirect("/dashboard")
+
+        else:
+            return "Invalid Username or Password"
+
+    return render_template("login.html")
+
+# DASHBOARD
+
+@app.route("/dashboard")
+def dashboard():
+
+    if "username" not in session:
+        return redirect("/login")
+
+    return render_template(
+        "dashboard.html",
+        username=session["username"]
+    )
+
+# CREATE POST
+
+@app.route("/create_post", methods=["GET","POST"])
+def create_post():
+
+    if "username" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+
+        title = request.form["title"]
+        content = request.form["content"]
+
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            "INSERT INTO posts(title,content) VALUES(%s,%s)",
+            (title,content)
+        )
+
+        mysql.connection.commit()
+
+       flash("Post Published Successfully ✨")
+
+       cur.close()
+
+        return redirect("/posts")
+
+    return render_template("create_post.html")
+
+# VIEW POSTS
+
+@app.route("/posts")
+def posts():
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("SELECT * FROM posts")
+
+    all_posts = cur.fetchall()
+
+    cur.close()
+
+    return render_template(
+        "posts.html",
+        posts=all_posts
+    )
+
+# EDIT POST
+
+@app.route("/edit_post/<int:id>", methods=["GET","POST"])
+def edit_post(id):
+
+    if "username" not in session:
+        return redirect("/login")
+
+    cur = mysql.connection.cursor()
+
+    if request.method == "POST":
+
+        title = request.form["title"]
+        content = request.form["content"]
+
+        cur.execute(
+            "UPDATE posts SET title=%s, content=%s WHERE id=%s",
+            (title, content, id)
+        )
+
+        mysql.connection.commit()
+        flash("Post Updated Successfully✏️")
+        cur.close()
+
+        return redirect("/posts")
+
+    cur.execute(
+        "SELECT * FROM posts WHERE id=%s",
+        [id]
+    )
+
+    post = cur.fetchone()
+
+    cur.close()
+
+    return render_template(
+        "edit_post.html",
+        post=post
+    )
+# LOGOUT
+
+@app.route("/logout")
+def logout():
+
+    session.pop("username", None)
+
+    return redirect("/login")
+
+# RUN
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+# DELETE POST
+
+@app.route("/delete_post/<int:id>")
+def delete_post(id):
+
+    if "username" not in session:
+        return redirect("/login")
+
+    cur = mysql.connection.cursor()
+
+    cur.execute(
+        "DELETE FROM posts WHERE id=%s",
+        [id]
+    )
+
+    mysql.connection.commit()
+
+    flash("Post Deleted Successfully✏️")
+
+    cur.close()
+
+    return redirect("/posts")

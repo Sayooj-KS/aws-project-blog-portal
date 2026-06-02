@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="navbar">
+
+    <div class="logo">
+        Blog Portal 🚀
+    </div>
+
+    <div class="nav-links">
+
+        <a href="/profile">Profile 👤</a>
+
+        <a href="/create_post">Create Post ✍️</a>
+
+        <a href="/posts">View Posts 📚</a>
+
+        <a href="/logout">Logout 🚪</a>
+
+    </div>
+
+</div>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>
+            Welcome {{ username }} 🚀
+        </h1>
+
+        <p>
+            Your AWS Flask Blog Portal is running successfully.
+        </p>
+
+    </div>
+
+</div>
+
+</body>
+</html>
